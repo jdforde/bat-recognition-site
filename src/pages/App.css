@@ -1,0 +1,89 @@
+.background1{
+  background-image: url(../util/sonoran.jpg);
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  position:fixed;
+  width:100%;
+  height:100%;
+  top:0px;
+  left:0px;
+  z-index:1000;
+}
+
+.background2{
+  background-image: url(../util/sonoran.jpg);
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  position:fixed;
+  width:100%;
+  height:100%;
+  top:0px;
+  left:0px;
+  z-index:1000;
+}
+
+.maincontainer{
+  position: absolute;
+  opacity: .9;
+  top: 50%;
+  left: 50%;
+  -ms-transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%);
+  background-color: #F5F5F5;
+  padding: .75rem 1.25rem;
+  border: 1px solid transparent;
+  border-radius: 1.25rem;
+  width: 60%;
+  animation: fadeIn ease 4s;
+}
+
+.textportion{
+  text-align: center;
+}
+
+.insidetext{
+  color: #000000;
+}
+
+img {
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 5px;
+  width: 100%;
+  height: auto;
+}
+
+.fixspeed{
+  animation-duration: 4s
+}
+
+.socialmedia{
+  text-align: center;
+  padding-top: 10px;
+}
+
+/* Style all font awesome icons */
+.fa {
+  padding: 10px;
+  font-size: 20px;
+  width: 40px;
+  text-decoration: none;
+  display: inline-block;
+}
+
+/* Add a hover effect if you want */
+.fa:hover {
+opacity: 0.7;
+}
+
+@keyframes fadeIn {
+0% {opacity:0;}
+100% {opacity:.9;}
+}
+
+@keyframes slide {
+  0% {left: 100;}
+  100% { left: 0; }
+}
