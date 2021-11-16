@@ -14,7 +14,7 @@ class main:
         self.skip_amount = int(args.skip)
         self.video_name = args.video[args.video.rfind('\\')+1:]
 
-        self.model = tf.keras.models.load_model('size_1K_epochs_200') #make sure to download this model's folder
+        self.model = tf.keras.models.load_model('python\size_1K_epochs_200') #make sure to download this model's folder
 
         if (self.screenshot):
             if (not os.path.isdir(args.screenshot)):
