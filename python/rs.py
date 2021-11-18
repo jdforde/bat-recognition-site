@@ -4,7 +4,6 @@ import numpy as np
 from imutils.video import FileVideoStream
 import sys, os, time
 import tensorflow as tf
-import keras as keras
 
 class main:
 
