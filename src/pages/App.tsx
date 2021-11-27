@@ -1,24 +1,31 @@
 import React from 'react';
-import logo from './logo.svg';
 import './App.css';
+import logo from './graph.png';
 
-//Design from last year's students
-const App = () => {
+function App() {
+	function handleClick() {
+    	console.log('You clicked submit.');
+  	}
+
   return (
-    <div className ="background1">
-        <div className="maincontainer">
-          <div className="w3-animate-right fixspeed textportion">
-              <h1>Bat Recognition Engine</h1>
-              <div>
-                  <input type="file" name="video" className = "filepond"/>
-              </div>
-              <form method = "POST" action = "/submit/">
-                  <input type="submit" className="btn btn-primary"/>
-              </form>
-          </div>
+    <div className ="container" id ="c">
+    	<div id="header">
+        	<h1> McDowell Sonoran Conservancy Bat Recording Upload </h1>
+        	<h2> Upload a video to receive bat entry/exit counts</h2>
+        	</div><br /><br />
+        <div id="main">
+        <form>
+        	<label>File name</label><input type="text" id="filename"></input><br />
+        	<label>Date recorded</label> <input type="date" id="filedate"></input><br />
+        	<label>Choose a file</label><input type="file" id="filename"></input><br /><br />
+        	<button type="submit" onClick={handleClick}> SUBMIT </button>
+		</form>
+		
+		<img src={logo} alt="Results" id="results" width="450" height="420"></img>
         </div>
     </div>
   );
 }
 
 export default App;
+
