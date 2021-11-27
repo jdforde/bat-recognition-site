@@ -1,89 +1,64 @@
-.background1{
-  background-image: url(../util/sonoran.jpg);
-  background-position: center;
-  background-repeat: no-repeat;
-  background-size: cover;
-  position:fixed;
-  width:100%;
-  height:100%;
-  top:0px;
-  left:0px;
-  z-index:1000;
+body{
+	background: #F6E3CE;
+	width: 100%;
+	height: 100%;
+	font-family: 'Verdana';
+	padding-top: 10px;
 }
 
-.background2{
-  background-image: url(../util/sonoran.jpg);
-  background-position: center;
-  background-repeat: no-repeat;
-  background-size: cover;
-  position:fixed;
-  width:100%;
-  height:100%;
-  top:0px;
-  left:0px;
-  z-index:1000;
+h1 {
+	color: #FF8101;
+	float: center;
+	size: 55px;
+	justify-content: center;
+  	align-items: center;
+  	display: flex;
+  	padding: 3px;
 }
 
-.maincontainer{
-  position: absolute;
-  opacity: .9;
-  top: 50%;
-  left: 50%;
-  -ms-transform: translate(-50%, -50%);
-  transform: translate(-50%, -50%);
-  background-color: #F5F5F5;
-  padding: .75rem 1.25rem;
-  border: 1px solid transparent;
-  border-radius: 1.25rem;
-  width: 60%;
-  animation: fadeIn ease 4s;
+h2 {
+	color: #434243;
+	float: center;
+	size: 35px;
+	justify-content: center;
+  	align-items: center;
+  	display: flex;
+  	padding: 3px;
+  	font-family: "Courier New";
+  	font-weight: bold;
 }
 
-.textportion{
-  text-align: center;
+label {
+	font-size: 20px;
+	padding: 6px;
 }
 
-.insidetext{
-  color: #000000;
+.container {
+	background: #F6E3CE;
+	padding-right: 50px;
+	padding-left: 50px;
 }
 
-img {
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  padding: 5px;
-  width: 100%;
-  height: auto;
+#header {
+	float: center;
+	background: white;
+	height: 150px;
+	padding: 20px;
+	padding-bottom: 50px;
+	justify-content: center;
+  	align-items: center;
 }
 
-.fixspeed{
-  animation-duration: 4s
+#main {
+	background: white;
+	border-style: solid;
+	padding: 40px;
+	padding-bottom: 20px;
+	height: 500px;	
 }
 
-.socialmedia{
-  text-align: center;
-  padding-top: 10px;
-}
-
-/* Style all font awesome icons */
-.fa {
-  padding: 10px;
-  font-size: 20px;
-  width: 40px;
-  text-decoration: none;
-  display: inline-block;
-}
-
-/* Add a hover effect if you want */
-.fa:hover {
-opacity: 0.7;
-}
-
-@keyframes fadeIn {
-0% {opacity:0;}
-100% {opacity:.9;}
-}
-
-@keyframes slide {
-  0% {left: 100;}
-  100% { left: 0; }
+#results {
+	position: relative;
+	top: -200px;
+	left: 500px;
 }
