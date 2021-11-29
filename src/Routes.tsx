@@ -1,13 +1,13 @@
 import { Routes, Route } from 'react-router-dom';
 import App from './pages/App';
-import YoutubeLink from './pages/YoutubeLink/YoutubeLink';
+import EmailResults from './pages/EmailResults/EmailResults';
 
 const Router = () => {
 
     return (
         <Routes>
             <Route path="/" element={<App />}/>
-            <Route path="/youtube-link" element={<YoutubeLink/>}/>
+            <Route path="/email-results" element={<EmailResults/>}/>
         </Routes>
     )
 }

@@ -18,6 +18,7 @@
     -ms-transform: translate(-50%, -50%);
     transform: translate(-50%, -50%);
     border-radius: 20px;
+    transition: height 0.25s linear;
 }
 
 .title {
@@ -27,7 +28,7 @@
 }
 
 .subtitle {
-    width: 65%;
+    width: 85%;
     margin: 0 auto;
     text-align: center;
     color: #323B44;
@@ -83,6 +84,21 @@
     color: #323B44;
     font-size: 25px;
 }
+
+.date {
+    border-radius: 15px;
+    border: solid 2px;
+    border-color: #5C8BC5;
+    border-radius: 10px;
+    height: 30px;
+    margin: auto 0;
+}
+
+.chooseFile {
+    margin: auto 0;
+    color: #323B44
+}
+
 
 
 

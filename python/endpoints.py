@@ -1,50 +1,48 @@
-import cv2
-import argparse
+from flask import Flask, request
+import os, cv2, smtplib, ssl
 import numpy as np
-from imutils.video import FileVideoStream
-import sys, os, time
 import tensorflow as tf
+from imutils.video import FileVideoStream
+import set_vars
 
-class main:
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
-    def __init__(self,args):
-        self.screenshot = True if(args.screenshot) else False
-        self.number_frames = 0
-        self.skip_amount = int(args.skip)
-        self.video_name = args.video[args.video.rfind('\\')+1:]
+#
+# This file represents the various endpoints that our front-end will call with documentation
+#
+
+app = Flask(__name__)
+
+
+#BatRecognizer is modificatin of rs.py. thr1 = 12 thr2 = 13, frames = 40, and no screenshotting capabilities
+class BatRecognizer:
+
+    def __init__(self, video, skp=1):
+        self.skip_amount = skp
 
         self.model = tf.keras.models.load_model('python\size_1K_epochs_200') #make sure to download this model's folder
-
-        if (self.screenshot):
-            if (not os.path.isdir(args.screenshot)):
-                print("ERROR: path specified is not a directory")
-                sys.exit(1)
-
-        self.file_index = 1
-        initialisationPeriod = int(args.frames)# decrease when noisy, increase when clear
-        self.loadVideoStream(args)
+        self.loadVideoStream(video)
         self.dim = None
         self.kernel = np.ones((3,3), np.uint8)
-        self.run(initialisationPeriod, args)
+        self.run()
 
     def stop(self):
         self.stream.stop()
         cv2.destroyAllWindows()
 
-    def loadVideoStream(self, args):
-        self.stream = FileVideoStream(args.video).start()
+    def loadVideoStream(self, video):
+        self.stream = FileVideoStream(video).start()
 
     def loadVideoFrame(self, initialization_period=False):
         #We do not skip frames for the initialization period
         if not initialization_period:
             for _ in range(self.skip_amount):
                 frame = self.stream.read()
-                self.number_frames+=1
                 if frame is None:
-                    return None, None
+                    return None, None, None
         else:
             frame = self.stream.read()
-            self.number_frames+=1
 
         if frame is not None:
             copy_frame = frame.copy()
@@ -85,6 +83,7 @@ class main:
         self.iVARsq = self.rollingAvg_iVARsq
 
     def initialiseBackgroundFilter(self, iCOR):
+
         try:
             self.rollingAvg_iCOR = self.rollingAvg_iCOR + (iCOR - self.rollingAvg_iCOR)/self.n
         except:
@@ -117,8 +116,6 @@ class main:
         freeze_BG_mask = freeze_BG_mask*iBG
         self.iBG = update_BG_mask + freeze_BG_mask
         self.iBG.astype('float16')
-        if not self.screenshot:
-            cv2.imshow("self.iBG", self.iBG)
 
     def predict_iVAR(self, beta, iVARsq, iBG, iCOR, update_BG_mask, freeze_BG_mask):
         update_BG_mask = update_BG_mask*(beta*iVARsq + (1-beta)*np.square(iCOR - iBG))
@@ -126,35 +123,30 @@ class main:
         self.iVARsq = update_BG_mask + freeze_BG_mask
         self.iVARsq.astype('float16')
 
-        if not self.screenshot:
-            cv2.imshow("iVARsq", self.iVARsq)
 
     def generateOutputMask(self, THRESHOLD_TWO, iBG, iCOR):
         absiRES = abs(iBG - iCOR)
-        temp = absiRES - THRESHOLD_TWO
 
         MOVING_mask = np.clip(absiRES, a_min=THRESHOLD_TWO, a_max=1)
         MOVING_mask = (MOVING_mask - THRESHOLD_TWO)*255
         return MOVING_mask
 
     def display_mask(self, output, overlay=False):
-        if not self.screenshot:
-            cv2.imshow("MASK", output)
         k = cv2.waitKey(1)
         if k == ord('q'):
             self.stop()
 
-    def run(self, initialisationPeriod, args):
-        t1 = float(args.thr1)
-        t2 = float(args.thr2)
+    def run(self):
+        t1 = float(12)
+        t2 = float(13)
 
         assert t1 < t2
 
         alpha = 0.99
         beta = 0.99
-        self.initialiseFilters(initialisationPeriod)
+        self.initialiseFilters(40)
 
-        #each frame takes about .05 seconds to process
+
         while self.stream.more():
 
             self.iVAR = np.sqrt(self.iVARsq)
@@ -162,15 +154,9 @@ class main:
 
             frame, iCOR, copy_frame = self.loadVideoFrame()
 
-            #Fixes issue of program crashing at the end instead of gracefully exiting
             if frame is None:
-                print(self.number_frames)
                 break
             
-            
-            if not self.screenshot:
-                cv2.imshow("INPUT", frame)
-
             update, freeze = self.generateMasks(iCOR, self.iBG, THRESHOLD_ONE)
             self.predict_iBG(alpha, iCOR, self.iBG, update, freeze)
             self.predict_iVAR(beta, self.iVARsq, self.iBG, iCOR, update, freeze)
@@ -183,43 +169,64 @@ class main:
             clipped_output = np.clip(output, 0, 255)
             contours, hierarchy = cv2.findContours(clipped_output.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
             frame_uint8 = (frame*255).astype(np.uint8)
+            cv2.imshow("INPUT", frame_uint8)
 
             for contour in contours:
-                    (x, y, w, h) = cv2.boundingRect(contour)
-                   
-                    if (w*h) > 1000:
-                        if self.screenshot:
-                            file_location = os.path.join(args.screenshot, self.video_name + "_" + str(self.file_index) + ".png")
-                            print("Writing file", file_location)
-                            cv2.imwrite(file_location, frame_uint8[y+15:y+h+15, x+15:x+w+15]) #adding wiggle room of 15px to screenshot
-                            self.file_index +=1
+                (x, y, w, h) = cv2.boundingRect(contour)
+                
+                if (w*h) > 1000:
+                    resized_image = cv2.resize(copy_frame[int(y/1.3):int((y+h+15)/1.3), int(x/1.3):int((x+w+15)/1.3)], dsize=(180, 180), interpolation= cv2.INTER_CUBIC)
+                    img_array = tf.expand_dims(resized_image, 0)
+                    predictions = self.model.predict(img_array)
 
-
-                        resized_image = cv2.resize(copy_frame[int(y/1.3):int((y+h+15)/1.3), int(x/1.3):int((x+w+15)/1.3)], dsize=(180, 180), interpolation= cv2.INTER_CUBIC)
-                        img_array = tf.expand_dims(resized_image, 0)
-                        input()
-                        predictions = self.model.predict(img_array)
-
-                        score = tf.nn.softmax(predictions[0])
-                        print("This image most likely belongs to {} with a {:.2f} percent confidence.".format(['Bat', 'Not Bat'][np.argmax(score)], 100 * np.max(score)))
-            if self.screenshot:
-                cv2.imshow("INPUT", frame_uint8)
-                input()
+                    score = tf.nn.softmax(predictions[0])
+                    print("This image most likely belongs to {} with a {:.2f} percent confidence.".format(['Bat', 'Not Bat'][np.argmax(score)], 100 * np.max(score)))
 
             self.display_mask(output, frame)
 
-if __name__ == '__main__':
-    argparser = argparse.ArgumentParser()
-    argparser.add_argument('video', help='path to IR video')
-    argparser.add_argument('thr1', help='Estimation threshold')
-    argparser.add_argument('thr2', help='Output sensitivity')
-    argparser.add_argument('frames', help='Number of frames used to train the background')
-    #-sc is used to generate screenshots for model creation and training
-    argparser.add_argument('-sc', '--screenshot', help='Optional, takes screenshots of moving objects, specify absolute directory', default="")
-    argparser.add_argument('-skp', '--skip', help='Number of frames desired to skip. For example, -skp 4 means for every frame we analyze, skip the following 3.', default=1)
+"""
+request: http://localhost:5000/youtube/?link=<link>
+this wants:
+video name (will assume video is placed in videos folder)
+email
+date of recording
+response: none
+error codes:
+^update information above to be valid
 
+"""
+@app.route("/download/")
+def compute_stats():
+    set_vars
 
-    args = argparser.parse_args()
-    start_time = time.time()
-    main(args)
-    print("Total processing time:", str(time.time() - start_time))
+    #Handling of incorrect request
+    if ('name' not in request.args.keys() or 
+        'date' not in request.args.keys()):
+        return 'Bad Request', 400
+
+    #Handling of video not existing
+    if (not os.path.exists(os.path.join('videos', request.args['name']))):
+        return 'Unable to locate video', 404
+
+    if ('email' in request.args.keys()):
+        msg = MIMEMultipart('alternative')
+        msg['Subject'] = "Emergence Count Results for " + request.args['date']
+        msg['From'] = os.environ.get('EMAIL')
+        msg['To'] = request.args['email']
+
+    try:
+        count = BatRecognizer(os.path.join('videos', request.args['name']), 4)
+        text="Here are your results from the video: "
+    except:
+        text="There was an error trying to process your video"
+    
+    if ('email' in request.args.keys()):
+        msg.attach(MIMEText(text, 'plain'))
+        context = ssl.create_default_context()
+        with smtplib.SMTP_SSL('smtp.gmail.com', 465, context=context) as server:
+            server.login(os.environ.get('EMAIL'), os.environ.get('PASSWORD'))
+            server.sendmail(os.environ.get('EMAIL'), request.args['email'], msg.as_string())
+
+    return count, 200
+
+app.run()
