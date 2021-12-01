@@ -13,13 +13,26 @@
     position: absolute;
     top: 40%;
     left: 50%;
-    width: 50vw;
-    height: 50vh;
+    width: 900px;
+    
+    height: 500px;
     -ms-transform: translate(-50%, -50%);
     transform: translate(-50%, -50%);
     border-radius: 20px;
-    transition: height 0.25s linear;
+    animation: fadeIn linear .5s;
+    -webkit-animation: fadeIn linear .25s;
 }
+
+@keyframes fadeIn {
+    0% {opacity:0;}
+    100% {opacity:1;}
+  }
+  
+  
+  @-webkit-keyframes fadeIn {
+    0% {opacity:0;}
+    100% {opacity:1;}
+  }
 
 .title {
     text-align: center;

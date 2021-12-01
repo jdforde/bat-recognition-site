@@ -1,5 +1,7 @@
 from flask import Flask, request
 import os, cv2, smtplib, ssl
+from flask_cors.decorator import cross_origin
+from flask_cors import CORS
 import numpy as np
 import tensorflow as tf
 from imutils.video import FileVideoStream
@@ -13,6 +15,7 @@ from email.mime.text import MIMEText
 #
 
 app = Flask(__name__)
+CORS(app)
 
 
 #BatRecognizer is modificatin of rs.py. thr1 = 12 thr2 = 13, frames = 40, and no screenshotting capabilities
@@ -184,18 +187,8 @@ class BatRecognizer:
 
             self.display_mask(output, frame)
 
-"""
-request: http://localhost:5000/youtube/?link=<link>
-this wants:
-video name (will assume video is placed in videos folder)
-email
-date of recording
-response: none
-error codes:
-^update information above to be valid
 
-"""
-@app.route("/download/")
+@app.route("/count")
 def compute_stats():
     set_vars
 
@@ -207,26 +200,47 @@ def compute_stats():
     #Handling of video not existing
     if (not os.path.exists(os.path.join('videos', request.args['name']))):
         return 'Unable to locate video', 404
-
-    if ('email' in request.args.keys()):
-        msg = MIMEMultipart('alternative')
-        msg['Subject'] = "Emergence Count Results for " + request.args['date']
-        msg['From'] = os.environ.get('EMAIL')
-        msg['To'] = request.args['email']
-
+        
     try:
-        count = BatRecognizer(os.path.join('videos', request.args['name']), 4)
-        text="Here are your results from the video: "
-    except:
-        text="There was an error trying to process your video"
+        if ('email' in request.args.keys()):
+            msg = MIMEMultipart('alternative')
+            msg['Subject'] = "Emergence Count Results for " + request.args['date']
+            msg['From'] = os.environ.get('EMAIL')
+            msg['To'] = request.args['email']
+
+        try:
+            BatRecognizer(os.path.join('videos', request.args['name']), 4)
+            text="Here are your results from the video: "
+        except:
+            text="There was an error trying to process your video"
+        
+        if ('email' in request.args.keys()):
+            msg.attach(MIMEText(text, 'plain'))
+            context = ssl.create_default_context()
+            with smtplib.SMTP_SSL('smtp.gmail.com', 465, context=context) as server:
+                server.login(os.environ.get('EMAIL'), os.environ.get('PASSWORD'))
+                server.sendmail(os.environ.get('EMAIL'), request.args['email'], msg.as_string())
+        
+        os.remove(os.path.join('videos', request.args['name']))
+
+        count = 12 #SAPMLE RESPONSE. REMOVE LATER
+        return str(count), 200
+        
+    except Exception as e:
+        os.remove(os.path.join('videos', request.args['name']))
+        return e, 400
+
+@app.route("/upload", methods=['POST'])
+@cross_origin()
+def upload_file():
+    file = request.files['file']
+    path = os.path.join('videos', file.filename)
+    print(path)
+    file.save(path)
+
+    return 'Success', 200
+
+if __name__ == '__main__':
+    app.secret_key= os.urandom(24)
+    app.run(debug=True, use_reloader=False)
     
-    if ('email' in request.args.keys()):
-        msg.attach(MIMEText(text, 'plain'))
-        context = ssl.create_default_context()
-        with smtplib.SMTP_SSL('smtp.gmail.com', 465, context=context) as server:
-            server.login(os.environ.get('EMAIL'), os.environ.get('PASSWORD'))
-            server.sendmail(os.environ.get('EMAIL'), request.args['email'], msg.as_string())
-
-    return count, 200
-
-app.run()

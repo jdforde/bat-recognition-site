@@ -4,13 +4,14 @@ import styles from '../EmailResults/EmailResults.module.css'
 const EmailResults = () => {
 
     const [errorText, setErrorText] = useState('');
-    const [file, setFile] = useState(new Object());
+    const [file, setFile] = useState(new Blob() as File);
     const [date, setDate] = useState(new Date());
     const [email, setEmail] = useState('');
     const [success, setSuccess] = useState(false);
     const emailRegex = new RegExp(/^\S+@\S+\.\S+$/);
 
-    const HandleSubmit = () => {
+    const HandleSubmit = async () => {
+
         if (file === null || email === '' || date === new Date()) {
             setErrorText("Please fill out all fields");
             return;
@@ -20,11 +21,28 @@ const EmailResults = () => {
             setErrorText("Enter a valid email address");
             return;
         }
+        
+        if (!file.name.endsWith(".mp4")) {
+            setErrorText("Only .mp4 files are accepted");
+            return;
+        }
 
 
-        //Call endpoint for downloading
-        //Call endpoint for rs.py
-        console.log(file);
+
+        const data = new FormData();
+        data.append('file', file);
+        
+        //Maybe add a spinner here..
+        await fetch("http://localhost:5000/upload", {
+            method: 'POST',
+            body: data
+        }).then(res => {
+            console.log(res);
+            console.log(res.status)
+        });
+
+        fetch("http://localhost:5000/count?name=" + file.name + "&email=" + email + "&date=" + date)
+        
 
 
         setErrorText('');
@@ -32,7 +50,7 @@ const EmailResults = () => {
     }
 
     const HandleSubmitAgain = () => {
-        setFile(new Object);
+        setFile(new Blob() as File);
         setDate(new Date());
         setEmail('');
         setSuccess(false);
@@ -64,6 +82,7 @@ const EmailResults = () => {
                     </div>
 
                     <button className={styles.submitButton} onClick={HandleSubmit}>Submit</button>
+                    <br/>
                     <p className={styles.errorText}>{errorText}</p>
                 </div>
             </div>
@@ -74,7 +93,7 @@ const EmailResults = () => {
 
                 <h1 className={styles.title}>Success!</h1>
                 <h4 className={styles.subtitle}> When the processing is done, you will receive an email with the results. Click the button 
-                below if you would like to submit another video.</h4>
+                below if you would like to submit another video. Or, if you are done feel free to close this tab.</h4>
 
             
 
