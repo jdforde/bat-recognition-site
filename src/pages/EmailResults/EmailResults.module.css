@@ -13,12 +13,26 @@
     position: absolute;
     top: 40%;
     left: 50%;
-    width: 50vw;
-    height: 50vh;
+    width: 900px;
+    
+    height: 500px;
     -ms-transform: translate(-50%, -50%);
     transform: translate(-50%, -50%);
     border-radius: 20px;
+    animation: fadeIn linear .5s;
+    -webkit-animation: fadeIn linear .25s;
 }
+
+@keyframes fadeIn {
+    0% {opacity:0;}
+    100% {opacity:1;}
+  }
+  
+  
+  @-webkit-keyframes fadeIn {
+    0% {opacity:0;}
+    100% {opacity:1;}
+  }
 
 .title {
     text-align: center;
@@ -27,7 +41,7 @@
 }
 
 .subtitle {
-    width: 65%;
+    width: 85%;
     margin: 0 auto;
     text-align: center;
     color: #323B44;
@@ -83,6 +97,21 @@
     color: #323B44;
     font-size: 25px;
 }
+
+.date {
+    border-radius: 15px;
+    border: solid 2px;
+    border-color: #5C8BC5;
+    border-radius: 10px;
+    height: 30px;
+    margin: auto 0;
+}
+
+.chooseFile {
+    margin: auto 0;
+    color: #323B44
+}
+
 
 
 
