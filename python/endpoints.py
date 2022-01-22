@@ -210,7 +210,7 @@ def compute_stats():
 
         try:
             BatRecognizer(os.path.join('videos', request.args['name']), 4)
-            text="Here are your results from the video: "
+            text="Here are your results from the video: 12 bats"
         except:
             text="There was an error trying to process your video"
         

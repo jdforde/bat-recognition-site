@@ -27,8 +27,6 @@ const EmailResults = () => {
             return;
         }
 
-
-
         const data = new FormData();
         data.append('file', file);
         
@@ -43,8 +41,6 @@ const EmailResults = () => {
 
         fetch("http://localhost:5000/count?name=" + file.name + "&email=" + email + "&date=" + date)
         
-
-
         setErrorText('');
         setSuccess(true);
     }
