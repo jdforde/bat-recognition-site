@@ -1,0 +1,31 @@
+
+#links2 {
+	justify-content: center;
+  	align-items: center;
+  	display: flex;
+}
+
+#main2 {
+	height: auto;
+	width: 70%;
+	background: #BDBCBC;
+	border-style: solid;
+	border-radius: 25px;
+	opacity: 80%;
+	padding: 15px;
+  	display: block;
+}
+
+#wrapper2 {
+	font-size: 20px;
+  	padding-right: 200px;
+	padding-left: 200px;	
+  	display: flex;
+  	justify-content: center;
+  	align-items: center;
+}
+
+h5 {
+	display: inline-block;
+	padding: 5px;
+}
