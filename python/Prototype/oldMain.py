@@ -180,7 +180,7 @@ class main:
             
             #Create boundboxes around any movement from output
             clipped_output = np.clip(output,0,255)
-            contours,hierarchy = cv2.findContours(clipped_output.astype(np.uint8),cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            contours, hierarchy = cv2.findContours(clipped_output.astype(np.uint8),cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
             boxdrawings = np.zeros((output.shape[0],output.shape[1],3),dtype=np.uint8)
             color = (255,255,255)
             allboxes = []
