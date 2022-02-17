@@ -24,3 +24,4 @@ yarn-error.log*
 __pycache__
 videos/*
 set_vars.py
+__pycache__
