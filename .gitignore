@@ -25,3 +25,5 @@ __pycache__
 videos/*
 set_vars.py
 __pycache__
+venv
+env
