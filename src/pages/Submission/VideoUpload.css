@@ -1,3 +1,6 @@
+body{
+	background-image: linear-gradient(white, #0dacb5);
+}
 
 #links2 {
 	justify-content: center;
@@ -10,8 +13,7 @@
 	width: 70%;
 	background: #BDBCBC;
 	border-style: solid;
-	border-radius: 25px;
-	opacity: 80%;
+	border-radius: 15px;
 	padding: 15px;
   	display: block;
 }
@@ -25,7 +27,24 @@
   	align-items: center;
 }
 
+form {
+	padding: 10px;
+}
+
 h5 {
 	display: inline-block;
-	padding: 5px;
+	padding: 10px;
+	font-size: 24px;
+}
+
+#longtext {
+	width: 350px;
+}
+
+input[type=text] {
+	width: 150px;
+}
+
+label {
+	font-weight: bold;
 }
