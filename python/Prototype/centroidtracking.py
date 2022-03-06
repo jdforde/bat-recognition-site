@@ -1,6 +1,7 @@
 from collections import OrderedDict
 import numpy as np
 from scipy.spatial import distance as dist
+from trackableObjects import trackableObjects
 
 
 class Centroidtracking():
@@ -11,18 +12,28 @@ class Centroidtracking():
         self.nextObjectID = 0
         self.objects = OrderedDict()
         self.disappeared = OrderedDict()
+        
+        #running count of the entered and exited bats
+        self.entered=0
+        self.exited=0
 
-        #total frames that will be counted before a centroid is dropped
+        #total frames that will be counted before a tackable object is dropped default is 50 frames
         self.framesBeforeDisappeared = framesBeforeDisappeared
 
     #Put new objects into the objects dictionary
     def register(self, centroid):
-        #put centroid in our list and initialize the other values
-        self.objects[self.nextObjectID] = centroid
+        #put trackable object in our list and initialize the other values
+        self.objects[self.nextObjectID] = trackableObjects(centroid)
         self.disappeared[self.nextObjectID] = 0
         self.nextObjectID += 1
 
     def deregister(self, objectID):
+        self.objects[objectID].updateEndLocation()
+        if self.objects[objectID].enterOrExit()==1:
+            self.entered+=1
+        elif self.objects[objectID].enterOrExit()==-1:
+            self.exited+=1
+            
         del self.objects[objectID]
         del self.disappeared[objectID]
 
@@ -37,7 +48,7 @@ class Centroidtracking():
                 if self.disappeared[objectID] > self.framesBeforeDisappeared:
                     self.deregister(objectID)
                 
-            #terminate early if this is the case and return what we currently have
+            #terminate early if this is the case and return the current list
             return self.objects
         
         
@@ -51,33 +62,45 @@ class Centroidtracking():
             cY = int(startY+height/2.0)
             inputCentroids[i] = (cX,cY)
 
-        #if no objects initially, then add all that are seen
+        #if no objects initially, then add all that are seen to the list
         if len(self.objects)==0:
             for i in range(0,len(inputCentroids)):
                 self.register(inputCentroids[i])
         
+
+        #Otherwise, we have to calculate the distance to see which objects are closer.
         else:
             #get the list of the keys and values of the centroids that we currently have
             objectIDs = list(self.objects.keys())
-            objectCentroids = list(self.objects.values())
-
-            #compute distance to each respective objectCentroid
+            #Extract the objects from the current Objects List
+            objectList = list(self.objects.values())
+            objectCentroids=[]
+            for idx,object in enumerate(objectList):
+                objectCentroids.append(objectList[idx].getCurrentLocation())
+            
+            #compute Euclidian distance to each respective inputcentroid and return that list to D
+            #D will be a list of lists that contain the euclidean distances between
             D = dist.cdist(np.array(objectCentroids),inputCentroids)
 
-            #rows will be 
+            #Get the row of the minimum value for all inputs
             rows = D.min(axis = 1).argsort()
+
+            #col will be the row with the minimum value
             cols = D.argmin(axis=1)[rows]
             
+            #Keep track of which has been used
             usedRows = set()
             usedCols = set()
 
             for(row,col) in zip(rows,cols):
+
+                #If we used the tuple before, we'll skip it
                 if row in usedRows or col in usedCols:
                     continue
                 
                 objectID = objectIDs[row]
 
-                self.objects[objectID] = inputCentroids[col]
+                self.objects[objectID].updateCurrentLocation(inputCentroids[col])
                 self.disappeared[objectID]=0
 
                 usedRows.add(row)
@@ -97,3 +120,7 @@ class Centroidtracking():
                     for col in unusedCols:
                         self.register(inputCentroids[col])
         return self.objects
+
+
+    def getInNOut(self):
+        return (self.entered,self.exited)

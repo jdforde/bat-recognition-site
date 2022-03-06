@@ -5,6 +5,7 @@ from imutils.video import FileVideoStream
 import sys, os
 from collections import OrderedDict
 from centroidtracking import Centroidtracking
+from trackableObjects import trackableObjects
 
 class main:
 
@@ -180,25 +181,38 @@ class main:
             
             #Create boundboxes around any movement from output
             clipped_output = np.clip(output,0,255)
-            contours, hierarchy = cv2.findContours(clipped_output.astype(np.uint8),cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            contours,hierarchy = cv2.findContours(clipped_output.astype(np.uint8),cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
             boxdrawings = np.zeros((output.shape[0],output.shape[1],3),dtype=np.uint8)
             color = (255,255,255)
             allboxes = []
+
+            #Get all the contours
             for contour in contours:
                 allboxes.append(cv2.boundingRect(contour))
                 (x, y, w, h) = cv2.boundingRect(contour)
                 #draw the contour box
                 cv2.rectangle(boxdrawings, (x,y), (x+w,y+h), color, 2)
-                #draw the centroid point
-                #cv2.circle(boxdrawings, (int(x+w/2),int(y+h/2)), radius=0, color=color, thickness=5)
             
+            #Return the object list
             objectcentroids = self.ct.update(allboxes)
-            for (objectID,centroid) in objectcentroids.items():
+
+            #For every object, print the location, the centroid, and it's id
+            for (objectID,trackedObject) in objectcentroids.items():
                 text = "ID {}".format(objectID)
+                centroid=trackedObject.getCurrentLocation()
                 cv2.putText(boxdrawings, text, (centroid[0], centroid[1]+10),cv2.FONT_HERSHEY_SIMPLEX, color=color,fontScale=1)
                 cv2.circle(boxdrawings, (centroid[0],centroid[1]), radius=0, color=color, thickness=5)
+            
+            #Get the count of entered and exited objects
+            curCount=self.ct.getInNOut()
+            enteredText="Entered: {}".format(curCount[0])
+            exitedText="Exited: {}".format(curCount[1])
+            cv2.putText(boxdrawings, enteredText, (0,50),cv2.FONT_HERSHEY_SIMPLEX, color=color,fontScale=1)
+            cv2.putText(boxdrawings, exitedText, (0,100),cv2.FONT_HERSHEY_SIMPLEX, color=color,fontScale=1)
+            #Highlight gate, coords are bot-left, top-right
+            cv2.rectangle(boxdrawings, (220,425), (485,125), color, 4)
             cv2.imshow("contours",boxdrawings)
-
+            
             self.display_mask(output, frame)
 
 if __name__ == '__main__':
