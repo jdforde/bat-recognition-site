@@ -3,14 +3,14 @@ import styles from '../Results/Results.module.css'
 import {
     ComposedChart,
     Line,
-    Area,
-    Bar,
     XAxis,
     YAxis,
     CartesianGrid,
     Tooltip,
     Legend,
     ResponsiveContainer,
+    RadialBarChart,
+    RadialBar,
   } from 'recharts';
 
 const Results = () => {
@@ -42,7 +42,10 @@ const Results = () => {
         {minutesPassed: 56.18, batCount: 2, in: 13, out: 11},
         {minutesPassed: 57.03, batCount: 3, in: 14, out: 11},
         {minutesPassed: 57.03, batCount: 2, in: 14, out: 12},
-        {minutesPassed: 59.62, batCount: 3, in: 15, out: 12},
+        {minutesPassed: 59.62, batCount: 3, in: 15, out: 12}
+    ];
+
+    const data2 = [
         {name: "in", total: 15},
         {name: "out", total: 12}
     ];
@@ -50,13 +53,25 @@ const Results = () => {
     const renderChart = (
         <ResponsiveContainer width="100%" height="70%">
             <ComposedChart width={400} height={200} margin={{ top: 5, right: 100, bottom: 5, left: 100 }} data={data}>
-                <CartesianGrid stroke="#BDCCC9"/>
+                <CartesianGrid stroke="#61ccae"/>
                 <XAxis dataKey="minutesPassed" scale="auto" />
                 <YAxis dataKey="batCount" scale="linear" />
                 <Tooltip />
                 <Legend />
-                <Line type="monotone" dataKey="batCount" stroke="#FF9C5F" />
+                <Line type="monotone" dataKey="batCount" stroke="#ffb5ce" />
+                <Line type="monotone" dataKey="in" stroke="#ff6b65" />
+                <Line type="monotone" dataKey="out" stroke="#36454F" />
             </ComposedChart>
+        </ResponsiveContainer>
+    );
+
+    const renderBarChart = (
+        <ResponsiveContainer width="100%" height="70%">
+            <RadialBarChart width={730} height={250} innerRadius="10%" outerRadius="80%" data={data2} startAngle={180} endAngle={0}>
+                <RadialBar label={{ fill: '#36454F', position: 'insideStart' }} background dataKey='total' fill="#61ccae"/>
+                <Legend iconSize={10} width={120} height={140} layout='vertical' verticalAlign='middle' align="right" />
+                <Tooltip />
+            </RadialBarChart>
         </ResponsiveContainer>
     );
 

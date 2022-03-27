@@ -1,5 +1,5 @@
 .image {
-    background-image: url(../../util/dixie_mine_trail.jpg);
+    background-image: url(../../util/pink.PNG);
     background-position: center;
     background-repeat: no-repeat;
     background-size: cover;
@@ -71,7 +71,7 @@
 }
 
 .identifier {
-    color: #A4AC7A;
+    color: #61ccae;
     margin-right: 30px;
     margin-bottom: 15px;
 }
@@ -81,7 +81,7 @@
     margin-top: 8px;
     width: 100px;
     border: solid 2px;
-    border-color: #A4AC7A;
+    border-color: #61ccae;
     border-radius: 10px;
 }
 
@@ -89,7 +89,7 @@
     text-align: center;
     margin: 0 auto;
     display: block;
-    background-color: #A4AC7A;
+    background-color: #61ccae;
     border-radius: 20px;
     color: white;
     width: 100px;
