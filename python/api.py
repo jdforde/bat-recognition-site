@@ -1,3 +1,4 @@
+from curses import meta
 import enum
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
@@ -30,14 +31,19 @@ class Precipitation(enum.Enum):
     
 class Submission(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    metadata_id = db.Column(db.Integer, unique=False, nullable=False)
-    angle1_part1 = db.Column(db.Integer, unique=False, nullable=False)
-    angle1_part2 = db.Column(db.Integer, unique=False, nullable=False)
-    angle2_part1 = db.Column(db.Integer, unique=False, nullable=False)
-    angle2_part2 = db.Column(db.Integer, unique=False, nullable=False)
+    metadata_id = db.Column(db.Integer, db.ForeignKey('meta.id'), nullable=False)
+    meta = db.relationship('Metadata', backref=db.backref('sumbmissions', lazy=True))
+    angle1_part1 = db.Column(db.Integer, db.ForeignKey('video1.id'), nullable=False)
+    video1 = db.relationship('Video', backref=db.backref('sumbmissions', lazy=True))
+    angle1_part2 = db.Column(db.Integer, db.ForeignKey('video2.id'), nullable=False)
+    video2 = db.relationship('Video', backref=db.backref('sumbmissions', lazy=True))
+    angle2_part1 = db.Column(db.Integer, db.ForeignKey('video3.id'), nullable=False)
+    video3 = db.relationship('Video', backref=db.backref('sumbmissions', lazy=True))
+    angle2_part2 = db.Column(db.Integer, db.ForeignKey('video4.id'), nullable=False)
+    video4 = db.relationship('Video', backref=db.backref('sumbmissions', lazy=True))
 
     def __repr__(self):
-        return '<EmergenceCountSurvey %r>' % self.expert
+        return '<Submission %r>' % self.id
 
 class Video(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -49,24 +55,28 @@ class Video(db.Model):
 
 class Bat_Sighting(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    video_id = db.Column(db.Integer, unique=True, nullable=False)
+    video_id = db.Column(db.Integer, db.ForeignKey('video.id'), nullable=False)
+    video = db.relationship('Video', backref=db.backref('bat_sightings', lazy=True))
     minutes_passed = db.Column(db.Double, unique=False, nullable=False)
     bat_count = db.Column(db.Booolean, unique=False, nullable=False)
 
     def __repr__(self):
-        return '<BatData %r>' % self.bat_count
+        return '<Bat_Sighting %r>' % self.id
 
 class Metadata(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     date_recorded = db.Column(db.Date, unique=True, nullable=False)
     sunset_time = db.Column(db.Time, unique=True, nullable=False)
     new_moon = db.Column(db.Date, unique=True, nullable=False)
-    team_expert = db.Column(db.Integer, unique=True, nullable=False)
-    recorder = db.Column(db.Integer, unique=True, nullable=False)
-    participant = db.Column(db.Integer, unique=True, nullable=False)
+    team_expert = db.Column(db.Integer, db.ForeignKey('person1.id'), nullable=False)
+    person1 = db.relationship('Person', backref=db.backref('metadata', lazy=True))
+    recorder = db.Column(db.Integer, db.ForeignKey('person2.id'), nullable=False)
+    person2 = db.relationship('Person', backref=db.backref('metadata', lazy=True))
+    participant = db.Column(db.Integer, db.ForeignKey('person1.id'), nullable=False)
+    person1 = db.relationship('Person', backref=db.backref('metadata', lazy=True))
 
     def __repr__(self):
-        return '<BatData %r>' % self.bat_count
+        return '<Metadata %r>' % self.id
 
 class Person(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -74,11 +84,12 @@ class Person(db.Model):
     role = db.Column(db.String, unique=False, nullable=False)
 
     def __repr__(self):
-        return '<BatData %r>' % self.bat_count
+        return '<Person %r>' % self.id
 
 class Weather(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    metadata_id = db.Column(db.Integer, unique=False, nullable=False)
+    metadata_id = db.Column(db.Integer, db.ForeignKey('meta.id'), nullable=False)
+    meta = db.relationship('Metadata', backref=db.backref('weather', lazy=True))
     is_sunset = db.Column(db.Booolean, unique=False, nullable=False)
     temp = db.Column(db.Double, unique=True, nullable=False)
     relative_humidity = db.Column(db.Double, unique=True, nullable=False)
@@ -86,13 +97,14 @@ class Weather(db.Model):
     cloud_cover = db.Column(CloudCover, unique=False, nullable=False)
 
     def __repr__(self):
-        return '<BatData %r>' % self.bat_count
+        return '<Weather %r>' % self.id
 
 class Precipitation(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    metadata_id = db.Column(db.Integer, unique=False, nullable=False)
+    metadata_id = db.Column(db.Integer,db.ForeignKey('meta.id'), nullable=False)
+    meta = db.relationship('Metadata', backref=db.backref('precipitation', lazy=True))
     time_of_day = db.Column(TimeOfDay, unique=False, nullable=False)
     precipitation_type = db.Column(Precipitation, unique=False, nullable=False)
 
     def __repr__(self):
-        return '<EmergenceCountSurvey %r>' % self.expert
+        return '<Precipitation %r>' % self.id
