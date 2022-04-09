@@ -6,6 +6,9 @@ import sys, os
 from collections import OrderedDict
 from centroidtracking import Centroidtracking
 from trackableObjects import trackableObjects
+import tensorflow as tf
+import keras as keras
+
 
 class main:
 
@@ -14,6 +17,12 @@ class main:
         
         self.ct = Centroidtracking(int(args.disappeartime))
 
+        #Used for filtering non-bats
+        self.model = tf.keras.models.load_model('python\size_1K_epochs_200')
+        self.class_names = ['Bat', 'Not Bat']
+
+        self.number_frames=0
+        self.skip_amount=int(args.skip)
         self.video_name = args.video[args.video.rfind('\\')+1:]
 
         if (self.screenshot):
@@ -26,7 +35,7 @@ class main:
         self.loadVideoStream(args)
         self.dim = None
         self.kernel = np.ones((3,3), np.uint8)
-        self.run(initialisationPeriod, args)
+        print(self.run(initialisationPeriod, args))
 
     def stop(self):
         self.stream.stop()
@@ -35,23 +44,55 @@ class main:
     def loadVideoStream(self, args):
         self.stream = FileVideoStream(args.video).start()
 
-    def loadVideoFrame(self):
-        frame = self.stream.read()
+    def loadVideoFrame(self,initialization_period=False):
+        
+        #frame = self.stream.read()
 
-        self.h, self.w, _ = frame.shape
-        if self.dim is None:
-            scale_percent = 130 # percent of original size
-            width = int(frame.shape[1] * scale_percent / 100)
-            height = int(frame.shape[0] * scale_percent / 100)
-            self.dim = (width, height)
-        frame = cv2.resize(frame, self.dim, interpolation=cv2.INTER_AREA)
-        if frame is None:
-            self.stop()
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        frame = frame/255
-        frame.astype('float16')
-        iCOR = self.correctImage(frame)
-        return frame, iCOR
+        #self.h, self.w, _ = frame.shape
+        #if self.dim is None:
+        #    scale_percent = 130 # percent of original size
+        #    width = int(frame.shape[1] * scale_percent / 100)
+        #    height = int(frame.shape[0] * scale_percent / 100)
+        #    self.dim = (width, height)
+        #frame = cv2.resize(frame, self.dim, interpolation=cv2.INTER_AREA)
+        #if frame is None:
+        #    self.stop()
+        #frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        #frame = frame/255
+        #frame.astype('float16')
+        #iCOR = self.correctImage(frame)
+        #return frame, iCOR
+
+        #We do not skip frames for the initialization period
+        if not initialization_period:
+            for _ in range(self.skip_amount):
+                frame = self.stream.read()
+                self.number_frames+=1
+                if frame is None:
+                    return None, None, None
+        else:
+            frame = self.stream.read()
+            self.number_frames+=1
+
+        if frame is not None:
+            copy_frame = frame.copy()
+            self.h, self.w, _ = frame.shape #NoneType has no attribute 'shape'
+            if self.dim is None:
+                scale_percent = 130 # percent of original size
+                width = int(frame.shape[1] * scale_percent / 100)
+                height = int(frame.shape[0] * scale_percent / 100)
+                self.dim = (width, height)
+            frame = cv2.resize(frame, self.dim, interpolation=cv2.INTER_AREA)
+            if frame is None:
+                self.stop()
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            frame = frame/255
+            frame.astype('float16')
+            iCOR = self.correctImage(frame)
+            return frame, iCOR, copy_frame
+        else:
+            return None, None, None
+
 
     def correctImage(self, frame):
         try:
@@ -66,7 +107,7 @@ class main:
 
     def initialiseFilters(self, initialisationPeriod):
         for self.n in range(initialisationPeriod):
-            frame, iCOR = self.loadVideoFrame()
+            frame, iCOR, frame_copy = self.loadVideoFrame()
             self.initialiseBackgroundFilter(iCOR)
             self.initialiseVarianceFilter(frame, iCOR)
         self.iBG = self.rollingAvg_iCOR
@@ -143,12 +184,18 @@ class main:
         beta = 0.99
         self.initialiseFilters(initialisationPeriod)
 
-        while self.stream.more() is True:
+        while self.stream.more():
 
             self.iVAR = np.sqrt(self.iVARsq)
             THRESHOLD_ONE, THRESHOLD_TWO = self.updateThresholds(t1, t2, self.iVAR)
 
-            frame, iCOR = self.loadVideoFrame()
+            frame, iCOR, copy_frame = self.loadVideoFrame()
+
+            #Fixes crash instead of graceful Termination
+            if frame is None:
+                return (curCount,self.ct.getEnterExitList())
+
+
             if not self.screenshot:
                 cv2.imshow("INPUT", frame)
 
@@ -161,6 +208,8 @@ class main:
             filled_mask = cv2.dilate(removed_singles, self.kernel, iterations=2)
             output = cv2.blur(filled_mask, (9,9))
 
+
+            #Start of ScreenShot Portion. Optional
             #Add larger wiggle room
             #Tinker around with minimum image size for screenshot, 2000 was too big
             if self.screenshot:
@@ -179,22 +228,50 @@ class main:
                     cv2.rectangle(frame_uint8, (x,y), (x+w, y+h), (0, 128, 0), 3)
                 cv2.imshow("INPUT", frame_uint8)
             
-            #Create boundboxes around any movement from output
+            #Start of creating boundboxes around any movement from output
+            #window of only 0's and ones
             clipped_output = np.clip(output,0,255)
-            contours,hierarchy = cv2.findContours(clipped_output.astype(np.uint8),cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+
+
+            #Find the contours of the image
+            contours,hierarchy = cv2.findContours(clipped_output.astype(np.uint8),cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            #create the box drawings array to hold the values
             boxdrawings = np.zeros((output.shape[0],output.shape[1],3),dtype=np.uint8)
             color = (255,255,255)
             allboxes = []
-
-            #Get all the contours
-            for contour in contours:
-                allboxes.append(cv2.boundingRect(contour))
-                (x, y, w, h) = cv2.boundingRect(contour)
-                #draw the contour box
-                cv2.rectangle(boxdrawings, (x,y), (x+w,y+h), color, 2)
             
-            #Return the object list
-            objectcentroids = self.ct.update(allboxes)
+            #For each frame, keep a temp screenshot
+            
+
+            #Get all the contours and append them to a list
+            for contour in contours:
+                (x, y, w, h) = cv2.boundingRect(contour)
+                #draw the contour box in the boxdrawings array
+                cv2.rectangle(boxdrawings, (x,y), (x+w,y+h), color, 2)
+                
+                #for each rect, determine likelyhood of bat from the output of the screenshot.
+                #Only append bats to the allboxes to check
+                
+                resized_image=cv2.resize(copy_frame[int(y/1.3):int((y+h+15)/1.3),int(x/1.3):int((x+w+15)/1.3)], dsize=(180, 180), interpolation= cv2.INTER_CUBIC)
+                img_array = tf.expand_dims(resized_image,0)
+
+                predictions=self.model.predict(img_array)
+
+                #img_array_res = keras.preprocessing.image.array_to_img(img_array)
+                #img_array_res = keras.preprocessing.image.img_to_array(img_array_res)
+                
+                #predictions = self.model(img_array_res)
+                score = tf.nn.softmax(predictions[0])
+                if self.class_names[np.argmax(score)]=="Bat":
+                    allboxes.append(cv2.boundingRect(contour))
+                    #Draw the actual bats as different color
+                    cv2.rectangle(boxdrawings, (x,y), (x+w,y+h), (255,0,0), 2)
+
+                
+                
+            
+            #Return the object list from the update function
+            objectcentroids = self.ct.update(allboxes,self.number_frames)
 
             #For every object, print the location, the centroid, and it's id
             for (objectID,trackedObject) in objectcentroids.items():
@@ -218,11 +295,12 @@ class main:
 if __name__ == '__main__':
     argparser = argparse.ArgumentParser()
     argparser.add_argument('video', help='path to IR video')
+    #argparser.add_argument('model', help='directory of tensorflow model')
     argparser.add_argument('thr1', help='Estimation threshold')
     argparser.add_argument('thr2', help='Output sensitivity')
     argparser.add_argument('frames', help='Number of frames used to train the background')
     argparser.add_argument('-sc', '--screenshot', help='Optional, takes screenshots of moving objects, specify absolute directory', default="")
     argparser.add_argument('-dis','--disappeartime',help='How many frames before we deallocate a centroid',default=50)
-
+    argparser.add_argument('-skp', '--skip', help='Number of frames desired to skip. For example, -skp 4 means for every frame we analyze, skip the following 3.', default=1)
     args = argparser.parse_args()
     main(args)

@@ -17,27 +17,30 @@ class Centroidtracking():
         self.entered=0
         self.exited=0
 
+        self.enterexitList=[]
         #total frames that will be counted before a tackable object is dropped default is 50 frames
         self.framesBeforeDisappeared = framesBeforeDisappeared
 
     #Put new objects into the objects dictionary
-    def register(self, centroid):
+    def register(self, centroidinfo):
         #put trackable object in our list and initialize the other values
-        self.objects[self.nextObjectID] = trackableObjects(centroid)
+        self.objects[self.nextObjectID] = trackableObjects(centroidinfo)
         self.disappeared[self.nextObjectID] = 0
         self.nextObjectID += 1
 
-    def deregister(self, objectID):
+    def deregister(self, objectID,timestamp):
         self.objects[objectID].updateEndLocation()
         if self.objects[objectID].enterOrExit()==1:
             self.entered+=1
+            self.enterexitList.append(("Entered",timestamp))
         elif self.objects[objectID].enterOrExit()==-1:
             self.exited+=1
+            self.enterexitList.append(("Exited",timestamp))
             
         del self.objects[objectID]
         del self.disappeared[objectID]
 
-    def update(self, rects):
+    def update(self, rects,timestamp):
         #if all objects are gone, update all disappeared counters
         if len(rects)==0:
             
@@ -46,7 +49,7 @@ class Centroidtracking():
             for objectID in list(self.disappeared.keys()):
                 self.disappeared[objectID] += 1
                 if self.disappeared[objectID] > self.framesBeforeDisappeared:
-                    self.deregister(objectID)
+                    self.deregister(objectID,timestamp)
                 
             #terminate early if this is the case and return the current list
             return self.objects
@@ -106,21 +109,23 @@ class Centroidtracking():
                 usedRows.add(row)
                 usedCols.add(col)
 
-                unusedRows=set(range(0,D.shape[0])).difference(usedRows)
-                unusedCols=set(range(0,D.shape[1])).difference(usedCols)
+            unusedRows=set(range(0,D.shape[0])).difference(usedRows)
+            unusedCols=set(range(0,D.shape[1])).difference(usedCols)
 
-                if D.shape[0]>=D.shape[1]:
-                    for row2 in unusedRows:
-                        objectID = objectIDs[row2]
-                        self.disappeared[objectID]+=1
-
-                        if self.disappeared[objectID]>self.framesBeforeDisappeared:
-                            self.deregister(objectID)
-                else:
-                    for col in unusedCols:
-                        self.register(inputCentroids[col])
+            if D.shape[0]>=D.shape[1]:
+                for row2 in unusedRows:
+                    objectID = objectIDs[row2]
+                    self.disappeared[objectID]+=1
+                    if self.disappeared[objectID]>self.framesBeforeDisappeared:
+                        self.deregister(objectID,timestamp)
+            else:
+                for col2 in unusedCols:
+                    self.register(inputCentroids[col2])
         return self.objects
 
 
     def getInNOut(self):
         return (self.entered,self.exited)
+
+    def getEnterExitList(self):
+        return self.enterexitList

@@ -3,7 +3,6 @@ class trackableObjects():
         self.startingLocation = centroidLocation
         self.currentLocation = centroidLocation
         self.endingLocation = (0,0)
-        self.isBat = True
 
     #update the locations
     def updateCurrentLocation(self, currentLocation):
