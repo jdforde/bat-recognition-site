@@ -20,8 +20,8 @@ body{
 
 #wrapper2 {
 	font-size: 20px;
-  	padding-right: 200px;
-	padding-left: 200px;	
+  	padding-right: 15%;
+	padding-left: 15%;	
   	display: flex;
   	justify-content: center;
   	align-items: center;
@@ -37,8 +37,9 @@ h5 {
 	font-size: 24px;
 }
 
-#longtext {
-	width: 350px;
+
+#recorder, #observers {
+	width: 50%;
 }
 
 input[type=text] {
@@ -47,4 +48,6 @@ input[type=text] {
 
 label {
 	font-weight: bold;
+	font-family: Arial;
+	font-size: 25px;
 }
