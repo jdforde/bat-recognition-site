@@ -46,9 +46,9 @@ const EmailResults = () => {
     }
 
     const HandleSubmitAgain = () => {
-        setFile(new Blob() as File);
-        setDate(new Date());
-        setEmail('');
+        // setFile(new Blob() as File);
+        // setDate(new Date());
+        // setEmail('');
         setSuccess(false);
     }
 
